@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMainWindow, QLa
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.Qt import QHBoxLayout
 
-class CoughRecorderGUI(QWidget):
+class CoughGUIQthread(QWidget):
     
     def __init__(self):
         super().__init__()

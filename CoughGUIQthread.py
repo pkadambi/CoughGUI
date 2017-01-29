@@ -143,7 +143,7 @@ class CoughGUIQthread(QWidget):
     def keyPressEvent(self, e):
         
         if e.key() == Qt.Key_Escape:
-            self.close()
+            self.close() 
 '''
             
             

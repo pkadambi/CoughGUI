@@ -51,11 +51,14 @@ class CoughRecorderGUI(QWidget):
         topSettingsFrame = QFrame(self)
         topSettingsFrame.setFrameShape(QFrame.StyledPanel)      
         
+        
         middleRecordFrame = QFrame(self)
         middleRecordFrame.setFrameShape(QFrame.StyledPanel) 
         
+        
         bottomStatusFrame = QFrame(self)
         bottomStatusFrame.setFrameShape(QFrame.StyledPanel) 
+        
         
         splitter1 = QSplitter(Qt.Vertical)
         splitter1.addWidget(topSettingsFrame)
@@ -116,6 +119,7 @@ class CoughRecorderGUI(QWidget):
 
     #--- Redefine Exit function to ensure that the application closes----------
     def closeEvent(self, *args, **kwargs):
+        
         self.stopRecord = True
         return QWidget.closeEvent(self, *args, **kwargs)
     #--------------------------------------------------------------------------
@@ -166,6 +170,8 @@ class CoughRecorderGUI(QWidget):
                 #Play the indicator tone
                 time.sleep(1)
                 winsound.Beep( 1000+self.deviceID*100, 1500)
+                
+                
                 self.updateRecordStatusLabel('Current Status: Recording NOW.\nPress "Stop" to stop recording')                
                 
                 
@@ -184,6 +190,7 @@ class CoughRecorderGUI(QWidget):
                     i+=1
                     if(self.stopRecord):
                         self.recordBtn.setEnabled(True)
+                        print(self.coughCount)
                         return
                     time.sleep(.000001)
                 print(time.time()-t0)
@@ -199,7 +206,6 @@ class CoughRecorderGUI(QWidget):
     def stopRecordingButtonClicked(self):
 
         self.stopRecord = True
-        #print('FuckThis')
         time.sleep(0.01)
         self.stopRecord = False
         self.updateRecordStatusLabel('Current Status: NOT Recording.\nClick "Record" To start recording')

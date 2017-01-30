@@ -292,10 +292,10 @@ class CoughRecorderGUI(QWidget):
                     i+=1
                     if(self.stopRecord):
                         self.recordBtn.setEnabled(True)
-                        print(self.coughCount)
+#                         print(self.coughCount)
                         return
                     time.sleep(.000001)
-                print(time.time()-t0)
+#                 print(time.time()-t0)
                 
             #----- Initialize File IO Thread---------------------
             t = threading.Thread(target = callback)

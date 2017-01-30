@@ -1,5 +1,5 @@
 '''
-Created on Jan 26, 2017
+Created on Jan 23, 2017
 
 @author: Prad
 '''
@@ -15,7 +15,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QThread
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMainWindow, QLabel, QLineEdit, QSplitter, QFrame, QMessageBox
 from PyQt5.QtCore import pyqtSlot
-from PyQt5.Qt import QHBoxLayout
+from PyQt5.Qt import QHBoxLayout, QSize
 
 class CoughRecorderGUI(QWidget):
     
@@ -69,7 +69,7 @@ class CoughRecorderGUI(QWidget):
         
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
-        
+        self.setFixedSize(QSize(self.width,self.height))
         self.textboxDevID = QLineEdit(self)
         self.textboxDevID.move(190, 16)
         self.textboxDevID.resize(50,40)
@@ -152,17 +152,20 @@ class CoughRecorderGUI(QWidget):
                 self.coughCount = 0
                 self.recordBtn.setEnabled(False)
                 self.currentlyRecording=True
-                path = os.getcwd() 
+                execpath = os.getcwd() 
+                datapath = execpath + '/Data/'
+                if not os.path.exists(datapath):
+                    os.makedirs(datapath)
                 i = 0
-                for root, dirs, files in os.walk(path+'/Data'):
+                for root, dirs, files in os.walk(datapath):
                     for file in files:
                         if file.endswith(".txt"):   
-                            if i == int(file[18]) or i>1000:
+                            if ((i == int(file[18]) and self.deviceID == int(file[6])) or i>1000):
                                 i+=1
                                 continue
                             else:
                                 break
-                newfilename = path+'/Data/'+'Device'+str(self.deviceID)+'GroundTruth'+str(i)+'.txt'
+                newfilename = datapath+'Device'+str(self.deviceID)+'GroundTruth'+str(i)+'.txt'
                 txtfile = open(newfilename, 'w')
 #                 print(self.deviceID)
 #                 self.testPrint()
@@ -185,14 +188,14 @@ class CoughRecorderGUI(QWidget):
                 while True:
                     
                     txtfile.write(str(time.time()-t0) + ', '+ str(self.currentlyCoughing)+'\n')
-                    print('Time:',time.time()-t0,'\t','Cough Truth:\t',self.currentlyCoughing)
+#                     print('Time:',time.time()-t0,'\t','Cough Truth:\t',self.currentlyCoughing)
                    
                     i+=1
                     if(self.stopRecord):
                         self.recordBtn.setEnabled(True)
                         print(self.coughCount)
                         return
-                    time.sleep(.000001)
+#                     time.sleep(.000001)
                 print(time.time()-t0)
                 
             #----- Initialize File IO Thread---------------------

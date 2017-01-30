@@ -12,7 +12,7 @@ import threading
 import time
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QThread
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMainWindow, QLabel, QLineEdit, QSplitter, QFrame
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMainWindow, QLabel, QLineEdit, QSplitter, QFrame, QMessageBox
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.Qt import QHBoxLayout
 
@@ -20,22 +20,28 @@ class CoughRecorderGUI(QWidget):
     
     def __init__(self):
         super().__init__()
-        self.title = 'Cough Data Recorder Tool'
+        self.title = 'Cough Trial Tool'
         self.left = 300
         self.top = 300
         self.right = 200
         self.width = 300
         self.height = 200
-        self.currentlyRecording=0
+        self.currentlyRecording=False
         self.stopRecord = False
+        self.currentlyCoughing = False
         self.recordStateIndicator = 'Current Status: NOT Recording'
         self.deviceID=-1
         self.initUI()          
-        
+    #set coughingCurrently to 1 when button pressing
+    
+    def keyReleaseEvent(self, e):
+        if e.key() == Qt.Key_C:
+            self.currentlyCoughing = False         
+    def keyPressEvent(self, e):
+        if e.key() == Qt.Key_C:
+            self.currentlyCoughing = True 
 
     def initUI(self):
-        
-        
         hbox = QHBoxLayout(self)
         
         #Top, middle, and bottom pannels initialized for Settings, Record, and Status areas
@@ -72,16 +78,24 @@ class CoughRecorderGUI(QWidget):
         self.promptDeviceIDLabel.setFixedWidth(150)
         self.promptDeviceIDLabel.move(30,20) 
 #         self.statusBar()
-        recordBtn = QPushButton('Record', self)
-        recordBtn.setToolTip('Press this button to begin recording the trial')
-        recordBtn.move(30,80) 
-        recordBtn.clicked.connect(self.recordButtonClicked)
+        
+        self.recordBtn = QPushButton('Record', self)
+        self.recordBtn.setToolTip('Press this button to begin recording the trial')
+        self.recordBtn.move(30,80) 
+        self.recordBtn.released.connect(self.recordButtonClicked)
         
         stoprecordBtn = QPushButton('STOP', self)
         stoprecordBtn.setToolTip('Press this button to STOP Recording data')
         stoprecordBtn.move(190,80) 
-        stoprecordBtn.clicked.connect(self.stopRecordingButtonClicked)
+        stoprecordBtn.released.connect(self.stopRecordingButtonClicked)
         
+#         QMessageBox.question(self, 'PyQt5 message', "Do you want to save?",QMessageBox.Ok, QMessageBox.Ok)
+
+
+#         devIDwarning = QMessageBox()
+#         devIDwarning.setText( "Please enter a valid device ID. \nValid device IDs can only be integers greater than 0.")
+#         devIDwarning.setIcon(QMessageBox.Warning)
+#         devIDwarning.show()
         self.show()
         
     def testPrint(self):
@@ -91,52 +105,93 @@ class CoughRecorderGUI(QWidget):
     def updateRecordStatusLabel(self,statusStr):
         self.recordIndicatorLabel.setText(statusStr)
 
-    #def     
+#     def displayQMessage(self,messagetouser):
+#         reply = QMessageBox.question(self, 'Message',
+#         messagetouser, QMessageBox.Yes | 
+#         QMessageBox.No, QMessageBox.No)
+#     
     def recordButtonClicked(self):
         #1. create new file given device ID
             #maybe allow to select the folder
             #1a. check for old files with name, rename
             #create file and then
         #code for where pressing the C button will record the cough
-        
         #Update status label
-        self.updateRecordStatusLabel('Current Status: Recording NOW')
+
+        #if currently record
+#         if not self.currentlyRecording:
+
+            #----- Check to see if the device ID is valid ---------------------------------------------------------------------------------------
+            try:
+                    self.deviceID = int(self.textboxDevID.text())
+            except (RuntimeError, TypeError, NameError,ValueError):
+                QMessageBox.critical(self, 'Error',  "Please enter a valid device ID. \nValid device IDs can only be integers (whole numbers) greater than 0.", QMessageBox.Ok)
+                return
             
+            if self.deviceID<0:
+                QMessageBox.critical(self, 'Error',  "Please enter a valid device ID. \nValid device IDs can only be integers (whole numbers) greater than 0.", QMessageBox.Ok)
+                return
+            #------------------------------------------------------------------------------------------------------------------------------------
+            
+            def callback():
+                self.recordBtn.setEnabled(False)
+                self.currentlyRecording=True
+                #Get the device id
+    #             try:
+    #                 self.deviceID = int(self.textboxDevID.text())
+    #             except (RuntimeError, TypeError, NameError,ValueError):
+    #                 #self.displayQMessage("Are you fucking retarded, a device id should be an integer")
+    #                 QMessageBox.question(self, 'PyQt5 message', "Do you want to save?",QMessageBox.Ok, QMessageBox.Ok)
+                    
+    #                 devIDwarning = QMessageBox()
+    #                 devIDwarning.setText( "Please enter a valid device ID. \nValid device IDs can only be integers greater than 0.")
+    #                 devIDwarning.setIcon(QMessageBox.Critical)
+    #                 devIDwarning.setStandardButtons(QMessageBox.Ok)
+    #                 devIDwarning.show()
+                    #QMessageBox(self, "Ok", "Done.", QMessageBox.NoButton)
+    #                 QMessageBox.warning(None, "Invalid input", "Fill every blank.")
+                    #devIDwarning = QMessageBox.Information(self, 
+                    #                                      'Error',
+                    #                                       "Please enter a valid device ID. \nValid device IDs can only be integers greater than 0.",QMessageBox.Yes | 
+    #                                                        QMessageBox.No, QMessageBox.No)
+    #                 return
+                    
+                print(self.deviceID)
+                self.testPrint()
+                #create directory to 
+                #Play the indicator tone
+                time.sleep(1)
+                winsound.Beep( 1000+self.deviceID*100, 1500)
+                self.updateRecordStatusLabel('Current Status: Recording NOW')                
+                #Simulate writing to file for now
+                i, total = 0,0
+                t0 = time.time()
+                
+                while True:
+                    time.sleep(.000001)
+                    print('Time:',time.time()-t0,'\t','Cough Truth:\t',self.currentlyCoughing)
+                   
+                    i+=1
+                    if(self.stopRecord):
+                        self.recordBtn.setEnabled(True)
+                        return
+                
+                print(time.time()-t0)
+                
+                
+            t = threading.Thread(target = callback)
+            t.start()
+        
+    
 
 
-        
-        def callback():
-            
-            #Get the device id
-            self.deviceID = int(self.textboxDevID.text())
-            print(self.deviceID)
-            self.testPrint()
-                
-            #Play the indicator tone
-            time.sleep(1)
-            winsound.Beep( 1000+self.deviceID*100, 1500)
-                
-            #Simulate writing to file for now
-            i, total = 0,0
-            start = time.time()
-            
-            while (i<5000):
-                time.sleep(0.00001) #minimum sleep time will be 1ms
-                total+=1
-                #print(total,self.stopRecord)
-                i+=1
-                if(self.stopRecord):
-                    break
-            print(time.time()-start)
-            
-        t = threading.Thread(target = callback)
-        t.start()
-        
+    
     def stopRecordingButtonClicked(self):
-        stopRecord = True
-        print('FuckThis')
+
+        self.stopRecord = True
+        #print('FuckThis')
         time.sleep(0.2)
-        stopRecord = False
+        self.stopRecord = False
         self.updateRecordStatusLabel('Current Status: NOT Recording')
         
 '''

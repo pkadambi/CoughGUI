@@ -91,7 +91,13 @@ class CoughGUIQthread(QWidget):
     def updateRecordStatusLabel(self,statusStr):
         self.recordIndicatorLabel.setText(statusStr)
 
-    #def     
+    #def      
+    def stopRecordingButtonClicked(self):
+        stopRecord = True
+        print('FuckThis')
+        time.sleep(0.2)
+        stopRecord = False
+        self.updateRecordStatusLabel('Current Status: NOT Recording')
     def recordButtonClicked(self):
         #1. create new file given device ID
             #maybe allow to select the folder
@@ -132,12 +138,7 @@ class CoughGUIQthread(QWidget):
         t = threading.Thread(target = callback)
         t.start()
         
-    def stopRecordingButtonClicked(self):
-        stopRecord = True
-        print('FuckThis')
-        time.sleep(0.2)
-        stopRecord = False
-        self.updateRecordStatusLabel('Current Status: NOT Recording')
+
         
 '''
     def keyPressEvent(self, e):
@@ -167,7 +168,7 @@ class CoughGUIQthread(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    ex = CoughRecorderGUI()
+    ex = CoughGUIQthread()
     sys.exit(app.exec_())  
 
 '''

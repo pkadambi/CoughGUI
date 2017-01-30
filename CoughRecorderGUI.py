@@ -13,9 +13,9 @@ import glob
 import threading
 from PyQt5 import QtWidgets , QtGui
 from PyQt5.QtCore import Qt, QThread
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMainWindow, QLabel, QLineEdit, QSplitter, QFrame, QMessageBox, QGridLayout
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMainWindow, QLabel, QLineEdit, QSplitter, QFrame, QMessageBox, QGridLayout, QLCDNumber
 from PyQt5.QtCore import pyqtSlot
-from PyQt5.Qt import QHBoxLayout, QSize, QSizePolicy, QFormLayout, QVBoxLayout, QGroupBox
+from PyQt5.Qt import QHBoxLayout, QSize, QSizePolicy, QFormLayout, QVBoxLayout, QGroupBox, QFormLayout, QTabWidget
 
 class CoughRecorderGUI(QWidget):
     
@@ -25,7 +25,7 @@ class CoughRecorderGUI(QWidget):
         self.left = 300
         self.top = 300
         self.right = 200
-        self.width = 500
+        self.width = 340
         self.height = 400
         self.currentlyRecording=False
         self.stopRecord = False
@@ -42,40 +42,24 @@ class CoughRecorderGUI(QWidget):
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_C:
             self.coughCount += 1
-            self.currentlyCoughing = 1 
-
+            self.currentlyCoughing = 1
+            self.updateCoughCount(self.coughCount) 
+    
+    def updateCoughCount(self, count):
+        self.coughCountDisplay.display(self.coughCount)
     def initUI(self):   
-        
-        #Top, middle, and bottom pannels initialized for Settings, Record, and Status areas
-#         topSettingsFrame = QFrame(self)
-#         topSettingsFrame.setFrameShape(QFrame.StyledPanel)      
-#         
-#         middleRecordFrame = QFrame(self)
-#         middleRecordFrame.setFrameShape(QFrame.StyledPanel) 
-#         
-#         
-#         bottomStatusFrame = QFrame(self)
-#         bottomStatusFrame.setFrameShape(QFrame.StyledPanel) 
-        
-        
-        
-#         splitter1 = QSplitter(Qt.Vertical)
-#         splitter1.addWidget(topSettingsFrame)
-#         splitter1.addWidget(middleRecordFrame)
-#         splitter1.addWidget(bottomStatusFrame)
-        
-
-        
-#         hbox.addWidget()
-#         self.setLayout(grid)
         
         largefont = QtGui.QFont('Times', 12)
         largefont.setBold(False)
+        normalfont= QtGui.QFont('Times', 8)
+        normalfont.setBold(False)
         smallfont = QtGui.QFont('Times', 8)
         smallfont.setBold(True)
         
         #Device ID Text Box
         self.textboxDevID = QLineEdit(self)
+        self.textboxDevID.setMaximumWidth(50)
+        self.textboxDevID.setMaximumHeight(50)
         self.textboxDevID.move(190, 16)
         self.textboxDevID.resize(50,40)
         
@@ -85,8 +69,19 @@ class CoughRecorderGUI(QWidget):
         self.recordIndicatorLabel.move(30,120)
         self.recordIndicatorLabel.setFont(largefont)
         
+        #cough count label
+        coughCountLabel = QLabel('Coughs Counted:',self)
+        coughCountLabel.setMinimumWidth(100)
+        coughCountLabel.setFont(largefont)
+        
+        #cough count lcd display
+        self.coughCountDisplay = QLCDNumber(self)
+        self.coughCountDisplay.setMinimumHeight(50)
+        self.coughCountDisplay.setMinimumWidth(100)
+        self.coughCountDisplay.display(self.coughCount)
+        
         #Indicate input device ID
-        self.promptDeviceIDLabel = QLabel('Enter device ID (REQUIRED):',self) 
+        self.promptDeviceIDLabel = QLabel('Enter device ID:\n(REQUIRED)',self) 
         self.promptDeviceIDLabel.setMinimumWidth(10)
 #         self.promptDeviceIDLabel.setMaximumWidth(150)
         self.promptDeviceIDLabel.move(10,20) 
@@ -99,11 +94,13 @@ class CoughRecorderGUI(QWidget):
         self.recordBtn.setToolTip('Press this button to begin recording the trial')
         self.recordBtn.move(30,80) 
         self.recordBtn.released.connect(self.recordButtonClicked)
+        self.recordBtn.setFont(normalfont)
         
         stoprecordBtn = QPushButton('STOP Recording', self)
         stoprecordBtn.setToolTip('Press this button to STOP Recording data')
         stoprecordBtn.move(190,80) 
         stoprecordBtn.released.connect(self.stopRecordingButtonClicked)
+        stoprecordBtn.setFont(normalfont)
 
         #layout
         layout = QVBoxLayout()
@@ -111,23 +108,33 @@ class CoughRecorderGUI(QWidget):
         
         settingsBox = QGroupBox('Settings')
         settingsBox.setFont(smallfont)
-        settingsBoxLayout = QHBoxLayout() #probably should be grid layout
+#         settingsBoxLayout = QHBoxLayout() #probably should be grid layout
+#         settingsBoxLayout = QFormLayout()
+        settingsBoxLayout = QGridLayout()
+        settingsBoxLayout.setSpacing(10)
+        settingsBoxLayout.addWidget(self.promptDeviceIDLabel,1,0)
+        settingsBoxLayout.addWidget(self.textboxDevID,1,1,alignment=Qt.AlignCenter)
+#         settingsBoxLayout.addRow(self.promptDeviceIDLabel, self.textboxDevID)
         settingsBox.setLayout(settingsBoxLayout)
-        settingsBoxLayout.addWidget(self.promptDeviceIDLabel)
-        settingsBoxLayout.addWidget(self.textboxDevID)
+#         settingsBoxLayout.addWidget(self.promptDeviceIDLabel)
+#         settingsBoxLayout.addWidget(self.textboxDevID)
         
         ctrlBox = QGroupBox('Recording')
         ctrlBox.setFont(smallfont)
-        ctrlBoxLayout = QHBoxLayout() #probably should be grid layout
+        ctrlBoxLayout = QGridLayout() #probably should be grid layout
+#         ctrlBoxLayout.setSpacing(10)
         ctrlBox.setLayout(ctrlBoxLayout)
-        ctrlBoxLayout.addWidget(self.recordBtn)
-        ctrlBoxLayout.addWidget(stoprecordBtn)
+        ctrlBoxLayout.addWidget(self.recordBtn,1,0)
+        ctrlBoxLayout.addWidget(stoprecordBtn,1,1)
+        ctrlBoxLayout.addWidget(coughCountLabel,2,0,alignment=Qt.AlignCenter)
+        ctrlBoxLayout.addWidget(self.coughCountDisplay,2,1,alignment=Qt.AlignCenter)
         
         statusBox = QGroupBox('Status')
         statusBox.setFont(smallfont)
         statusBoxLayout = QVBoxLayout() #probably should be grid layout
         statusBox.setLayout(statusBoxLayout)
-        statusBoxLayout.addWidget(self.recordIndicatorLabel)
+        statusBoxLayout.addWidget(self.recordIndicatorLabel,alignment=Qt.AlignCenter)
+        
 #         statusBoxLayout.addWidget(stoprecordBtn)
         
         layout.addWidget(settingsBox)
@@ -250,7 +257,7 @@ class CoughRecorderGUI(QWidget):
                         self.recordBtn.setEnabled(True)
                         print(self.coughCount)
                         return
-#                     time.sleep(.000001)
+                    time.sleep(.000001)
                 print(time.time()-t0)
                 
             #----- Initialize File IO Thread---------------------

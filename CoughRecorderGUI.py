@@ -3,19 +3,20 @@ Created on Jan 23, 2017
 
 @author: Prad
 '''
-import numpy as np
 import sys
 import winsound
 import time
 import os
-import pyaudio
-import glob
 import threading
-from PyQt5 import QtWidgets , QtGui
-from PyQt5.QtCore import Qt, QThread
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMainWindow, QLabel, QLineEdit, QSplitter, QFrame, QMessageBox, QGridLayout, QLCDNumber
-from PyQt5.QtCore import pyqtSlot
-from PyQt5.Qt import QHBoxLayout, QSize, QSizePolicy, QFormLayout, QVBoxLayout, QGroupBox, QFormLayout, QTabWidget
+from PyQt5 import QtGui
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QLineEdit,  QMessageBox, QGridLayout, QLCDNumber
+from PyQt5.Qt import QSize, QSizePolicy, QVBoxLayout, QGroupBox, QTabWidget, QTextEdit
+#This is the main application
+# Other files in the project are not a part of the application
+
+#This is the main application
+# Other files in the project are not a part of the application
 
 class CoughRecorderGUI(QWidget):
     
@@ -25,13 +26,12 @@ class CoughRecorderGUI(QWidget):
         self.left = 300
         self.top = 300
         self.right = 200
-        self.width = 340
+        self.width = 380
         self.height = 400
         self.currentlyRecording=False
         self.stopRecord = False
         self.currentlyCoughing = 0
         self.coughCount = 0
-        self.recordStateIndicator = 'Current Status: NOT Recording.\nClick "Start Recording" To begin recording'
         self.deviceID=-1
         self.initUI()          
     #set coughingCurrently to 1 when button pressing
@@ -48,7 +48,6 @@ class CoughRecorderGUI(QWidget):
     def updateCoughCount(self, count):
         self.coughCountDisplay.display(self.coughCount)
     def initUI(self):   
-        
         largefont = QtGui.QFont('Times', 12)
         largefont.setBold(False)
         normalfont= QtGui.QFont('Times', 8)
@@ -63,17 +62,32 @@ class CoughRecorderGUI(QWidget):
         self.textboxDevID.move(190, 16)
         self.textboxDevID.resize(50,40)
         
+        #current status label
+        
+        currentStatusLabel = QLabel('Current Status:')
+        currentStatusLabel.setMinimumWidth(100)
+        currentStatusLabel.setFont(largefont)
+        
         #Record indicator label
-        self.recordIndicatorLabel = QLabel(self.recordStateIndicator,self) 
-        self.recordIndicatorLabel.setMinimumWidth(300)
+        self.recordIndicatorLabel = QLabel('NOT Recording') 
+        self.recordIndicatorLabel.setMinimumWidth(100)
         self.recordIndicatorLabel.move(30,120)
         self.recordIndicatorLabel.setFont(largefont)
         
+        
+        self.recordInstructionLabel = QLabel('Click "Start Recording" To begin recording.') 
+        self.recordInstructionLabel.setMinimumWidth(300)
+        self.recordInstructionLabel.setFont(largefont)
+
+        
+        coughLabelInstr = QLabel('After starting recording, press \'c\' to record a cough.')
+        coughLabelInstr.setMinimumWidth(100)
+        coughLabelInstr.setFont(normalfont)
+        
         #cough count label
-        coughCountLabel = QLabel('Coughs Counted:',self)
+        coughCountLabel = QLabel('Cough Count:',self)
         coughCountLabel.setMinimumWidth(100)
         coughCountLabel.setFont(largefont)
-        
         #cough count lcd display
         self.coughCountDisplay = QLCDNumber(self)
         self.coughCountDisplay.setMinimumHeight(50)
@@ -91,20 +105,20 @@ class CoughRecorderGUI(QWidget):
         
         #Button for recording
         self.recordBtn = QPushButton('Start Recording', self)
-        self.recordBtn.setToolTip('Press this button to begin recording the trial')
+        self.recordBtn.setToolTip('Press this button to begin recording the trial.')
         self.recordBtn.move(30,80) 
         self.recordBtn.released.connect(self.recordButtonClicked)
         self.recordBtn.setFont(normalfont)
         
         stoprecordBtn = QPushButton('STOP Recording', self)
-        stoprecordBtn.setToolTip('Press this button to STOP Recording data')
+        stoprecordBtn.setToolTip('Press this button to STOP Recording data.')
         stoprecordBtn.move(190,80) 
         stoprecordBtn.released.connect(self.stopRecordingButtonClicked)
         stoprecordBtn.setFont(normalfont)
 
         #layout
-        layout = QVBoxLayout()
-        self.setLayout(layout)
+        applayout = QVBoxLayout()
+        
         
         settingsBox = QGroupBox('Settings')
         settingsBox.setFont(smallfont)
@@ -124,38 +138,57 @@ class CoughRecorderGUI(QWidget):
         ctrlBoxLayout = QGridLayout() #probably should be grid layout
 #         ctrlBoxLayout.setSpacing(10)
         ctrlBox.setLayout(ctrlBoxLayout)
+        ctrlBox.setMinimumHeight(150)
         ctrlBoxLayout.addWidget(self.recordBtn,1,0)
+#         ctrlBoxLayout.setVerticalSpacing(30)
         ctrlBoxLayout.addWidget(stoprecordBtn,1,1)
-        ctrlBoxLayout.addWidget(coughCountLabel,2,0,alignment=Qt.AlignCenter)
-        ctrlBoxLayout.addWidget(self.coughCountDisplay,2,1,alignment=Qt.AlignCenter)
+        ctrlBoxLayout.addWidget(coughLabelInstr,2,0,1,2,alignment=Qt.AlignCenter)
+        ctrlBoxLayout.addWidget(coughCountLabel,3,0,alignment=Qt.AlignCenter)
+        ctrlBoxLayout.addWidget(self.coughCountDisplay,3,1,alignment=Qt.AlignCenter)
         
         statusBox = QGroupBox('Status')
         statusBox.setFont(smallfont)
-        statusBoxLayout = QVBoxLayout() #probably should be grid layout
+        statusBox.setMaximumHeight(100)
+#         statusBoxLayout = QVBoxLayout() #probably should be grid layout
+        statusBoxLayout = QGridLayout()
+        statusBoxLayout.addWidget(currentStatusLabel,1,0,alignment=Qt.AlignCenter)
         statusBox.setLayout(statusBoxLayout)
-        statusBoxLayout.addWidget(self.recordIndicatorLabel,alignment=Qt.AlignCenter)
+        statusBoxLayout.addWidget(self.recordIndicatorLabel,1,1,alignment=Qt.AlignCenter)
+        statusBoxLayout.addWidget(self.recordInstructionLabel,2,0,1,2,alignment=Qt.AlignCenter)
         
 #         statusBoxLayout.addWidget(stoprecordBtn)
         
-        layout.addWidget(settingsBox)
-        layout.addWidget(ctrlBox)
-        layout.addWidget(statusBox)
+        applayout.addWidget(settingsBox)
+        applayout.addWidget(ctrlBox)
+        applayout.addWidget(statusBox)
         
+        helpInstructions = QTextEdit()
+        helpInstructions.setReadOnly(True)
+        helpInstructions.setText('Help instructions would go here.\n\nJunk text has been added in for now since protocol is not completely defined. \n\n\n\n\n\n \nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.')
+        
+        #create the tabs
+        self.tabs = QTabWidget()
+        self.appTab = QWidget()
+        self.helpTab = QWidget()
+        self.appTab.setLayout(applayout)
+        
+        helplayout = QVBoxLayout()
+        helplayout.addWidget(helpInstructions)
+        self.helpTab.setLayout(helplayout)
+        
+        self.tabs.addTab(self.appTab, "Application")
+        self.tabs.addTab(self.helpTab,"Help and Instructions")
+
+        self.layout = QVBoxLayout(self)        
+        self.layout.addWidget(self.tabs)
+        self.setLayout(self.layout)
         
         self.textboxDevID.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Minimum)   
     
     
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
-        self.setFixedSize(QSize(self.width,self.height))
-        
-#         QMessageBox.question(self, 'PyQt5 message', "Do you want to save?",QMessageBox.Ok, QMessageBox.Ok)
-
-
-#         devIDwarning = QMessageBox()
-#         devIDwarning.setText( "Please enter a valid device ID. \nValid device IDs can only be integers greater than 0.")
-#         devIDwarning.setIcon(QMessageBox.Warning)
-#         devIDwarning.show()
+        self.setFixedSize(QSize(self.width,self.height))   
         self.show()
         
 #     def testPrint(self):
@@ -164,6 +197,9 @@ class CoughRecorderGUI(QWidget):
     #This function is called to update the Label indicating if we are recording
     def updateRecordStatusLabel(self,statusStr):
         self.recordIndicatorLabel.setText(statusStr)
+        
+    def updateRecordInstructionLabel(self,statusStr):
+        self.recordInstructionLabel.setText(statusStr)
 
 #     def displayQMessage(self,messagetouser):
 #         reply = QMessageBox.question(self, 'Message',
@@ -212,6 +248,7 @@ class CoughRecorderGUI(QWidget):
             
             def callback():
                 self.coughCount = 0
+                self.updateCoughCount(self.coughCount) 
                 self.recordBtn.setEnabled(False)
                 self.currentlyRecording=True
                 execpath = os.getcwd() 
@@ -237,8 +274,8 @@ class CoughRecorderGUI(QWidget):
                 winsound.Beep( 1000+self.deviceID*100, 1500)
 #                 self.playSound(self.deviceID)
                 
-                self.updateRecordStatusLabel('Current Status: Recording NOW.\nPress "Stop" to halt recording')                
-                
+                self.updateRecordStatusLabel('Recording NOW')                
+                self.updateRecordInstructionLabel('    Press "Stop" to halt recording.')
                 
                 # Get the new file to write into here
                 
@@ -273,7 +310,8 @@ class CoughRecorderGUI(QWidget):
         self.stopRecord = True
         time.sleep(0.01)
         self.stopRecord = False
-        self.updateRecordStatusLabel('Current Status: NOT Recording.\nClick "Start Recording" To begin recording')
+        self.updateRecordStatusLabel('NOT Recording')                
+        self.updateRecordInstructionLabel('Click "Start Recording" to begin recording.')
         
 '''
     def keyPressEvent(self, e):

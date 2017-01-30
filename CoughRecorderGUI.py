@@ -200,7 +200,7 @@ class CoughRecorderGUI(QWidget):
 
         self.stopRecord = True
         #print('FuckThis')
-        time.sleep(0.2)
+        time.sleep(0.01)
         self.stopRecord = False
         self.updateRecordStatusLabel('Current Status: NOT Recording.\nClick "Record" To start recording')
         
